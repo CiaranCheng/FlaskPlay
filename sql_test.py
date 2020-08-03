@@ -1,15 +1,14 @@
-from flask import Flask
-from utils import ms_con
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column,Integer,String
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+# 设置数据库URI
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://HARRISONS-THINK/LendApp'
+# db = SQLAlchemy(app)
+# SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-
-app = Flask(__name__)
-# Flask的构造函数以当前模块的名称__name__作为参数
-# Flask的一个对象就是一个WSGI应用程序
-
+# ---------第一部分：定义表-----------
 Base = declarative_base()#实例,创建基类
 #所有的表必须继承于Base
 class Enhancer(Base):
@@ -24,15 +23,10 @@ db_connect_string='mysql+pymysql://root:cxs123123.@localhost:3306/football?chars
 engine=create_engine(db_connect_string)#创建引擎
 Sesssion=sessionmaker(bind=engine)#产生会话
 session=Sesssion() #创建Session实例
-
-@app.route('/')
-def hello_world():
-   return 'Hello world'
-
-# 注意这里，app.run默认的主机是127.0.0.1,是不能被外部访问的
+#----------第三部分：进行数据操作--------
 if __name__ == '__main__':
-   # app.run(host='0.0.0.0', port=5000)
-   # sel = ms_con.dbUtils.sel()
-   enc = Enhancer()
-   encall = enc.
-   print(enc)
+    #提交新数据
+    session.add(Enhancer(chr="例子",start=200,end=400))#只能加一条数据
+    session.add_all([Enhancer(chr="例子12",start=200,end=400),Enhancer(chr="例子12",start=200,end=400)])
+    # 使用add_all可以一次传入多条数据，以列表的形式。
+    session.commit()#提交数据

@@ -1,1 +1,1 @@
-FLASK_APP = greendale
+FLASK_APP = microblog.py

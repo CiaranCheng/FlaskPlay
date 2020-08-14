@@ -10,6 +10,9 @@ def index():
     # else:
     #return render_template('index.html',title = 'studyroom',teacher = teacher,saying = 'Cool!')
     return render_template('index.html', title='Home', teacher=teacher, saying='Cool!')
+@app.route('/simplate')
+def simplate():
+    return render_template('simplate.html',saying = 'alllhell:')
 
 
 

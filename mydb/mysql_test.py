@@ -45,7 +45,6 @@ def login():
     if request.method == 'POST':
         return redirect(url_for('show_all'))
     return render_template('login.html', students = students.query.all() )
-
 if __name__ == '__main__':
     # db.create_all()
     # stu1 = students('ciaran','Jinan','Tangye','无')

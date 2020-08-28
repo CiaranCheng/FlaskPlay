@@ -31,13 +31,21 @@ def simplate():
 def getdata():
     cur = conn.cursor()
     tablename = "CGDD1"
-    sql = "select * from " + tablename
-    cur.execute(sql)
-    content = cur.fetchall()
+    
 	# 获取表头
-    sql = "Select Name FROM SysColumns Where id=Object_Id('"+tablename+"')"
+    sql = "SELECT Name FROM SysColumns Where id=Object_Id('"+tablename+"')"
     cur.execute(sql)
     labels = cur.fetchall()
+    fieldstr = ""
+    for field in labels:
+        fieldstr += (field[0] + ",")
+    fieldstr = fieldstr[:-1]
     labels = [l[0] for l in labels]
+
+	# 数据
+    sql = "SELECT "+fieldstr+" from " + tablename
+    cur.execute(sql)
+    content = cur.fetchall()
+
     return render_template('tabletest.html', tablename = tablename ,labels=labels, content=content)
 

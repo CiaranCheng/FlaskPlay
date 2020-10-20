@@ -1,6 +1,7 @@
 from greendale import app
 from flask import render_template
 
+from greendale.forms import LoginForm
 
 import pymssql
 
@@ -11,6 +12,7 @@ conn = pymssql.connect(
     database='cwbase51',
     charset='utf8'
 )
+
 # conn = pymssql.connect(host='127.0.0.1:1433',user='sa',password='123456',database='NEWPFJDB',charset='UTF-8')
 @app.route('/')
 
@@ -22,6 +24,14 @@ def index():
     # else:
     #return render_template('index.html',title = 'studyroom',teacher = teacher,saying = 'Cool!')
     return render_template('index.html', title='Home', teacher=teacher, saying='Cool!')
+
+# 表单
+@app.route('/login',methods=['POST'])
+def login():
+    forms = LoginForm()
+    return render_template('forms.html', title='Please Login', form = forms )
+
+
 @app.route('/simplate')
 def simplate():
     return render_template('simplate.html',saying = 'alllhell:')
@@ -41,7 +51,7 @@ def getdata():
         fieldstr += (field[0] + ",")
     fieldstr = fieldstr[:-1]
     labels = [l[0] for l in labels]
-
+    
 	# 数据
     sql = "SELECT "+fieldstr+" from " + tablename
     cur.execute(sql)

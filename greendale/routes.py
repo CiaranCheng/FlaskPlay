@@ -37,6 +37,7 @@ def getcsv():
     tablename = 'Airbab of NYC'
     # 此处数量过大，可分页加载
     filename = r'F:/AsCoder/Flask_test/FlaskPlay/TheNewYorkCity/AB_NYC_2019.csv/AB_NYC_2019.csv'
+    # filename = r'F:/AsCoder/Flask_test/FlaskPlay/TheNewYorkCity/AB_NYC_2019.csv/AB_NYC_2019.csv'
     with open(filename,encoding = 'UTF-8') as datafile:
         # 使用DictReader可以像字典那样获取数据
         reader = csv.reader(datafile)
@@ -62,7 +63,13 @@ def bar_base() -> Bar:
 
     # 上面的这种方式是 链式调用
     # -> Bar是指返回的数据类型是Bar类
-@app.route("/chartrender")
+@app.route("/echartbar")
 def chartrender():
     c = bar_base()
     return Markup(c.render_embed())
+
+@app.route("/bar")
+def csvrender():
+    filename = r'F:/AsCoder/Flask_test/FlaskPlay/TheNewYorkCity/AB_NYC_2019.csv/AB_NYC_2019.csv'
+    df_tb = pd.read_csv(filename)
+    

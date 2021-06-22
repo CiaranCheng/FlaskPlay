@@ -350,12 +350,15 @@ If gfexesql(lsSql,Sqlca) < 0 Then
 	Return -1
 End If
 
-// 把第一道工序 预置体直接更新为已转序，只有在生成CMCJSCRW产品时才更新
+// 把第一道工序 预置体直接更新为已转序，只有在生成CMCJSCRW产品时才更新 
 // 产品编号+分录编号0000000001能够锁定第一条
 lsSql = " update CMCJSCRWGY "+&
 	" set CMCJSCRWGY_GXZT='G5' "+&
 	" from "+isCmcjscrwcpTemp+&
 	" where CMCJSCRWGY_CPBH="+isCmcjscrwcpTemp+".F_CPBH and CMCJSCRWGY_FLBH='0000000001' "
+
+// 000000001 超码车间生产任务工艺 的分录编号是 标准工艺路线 中带过来的分录
+// sql的条件中除了分录编号只有产品编号一个条件，没有工序顺号，和上一步的
 
 If gfexesql(lsSql,Sqlca) < 0 Then
 	lsErr = Sqlca.sqlerrtext

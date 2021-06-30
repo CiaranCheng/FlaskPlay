@@ -67,7 +67,7 @@ If dw_data.rowcount() < 1 Then
 	Return -1
 End If
 
-// 清空一下临时表
+// 清空一下临时表----待转移产品工序临时表
 lsSql = "truncate table " + isDzyCpGxTempTable
 If gfexesql(lsSql,sqlca) < 0 Then
 	lsErr = sqlca.sqlerrtext
@@ -231,9 +231,7 @@ end if
 //lsNextGylxbh = "01"
 //lsNextGylxflbh = "0000000002"
 //lsParm = "01" +";"+"0000000002"  +";"
-
-// 下达工序选择
-
+ 
 openwithparm(w_cj_xacm_xdgxxz,lsParm)
 
 lsParm = message.stringparm
@@ -256,15 +254,15 @@ lsnextgxbh1 = get_token(lsParm,";") // 20210324 下道工序编号
 string vspswcbz 
 long llfind
 // 20210520 判断下道工序如果是包装工序 需要判断评审完成标志
-if lsnextgxbh1 = '10' then
-	//vspswcbz = //lsGxsh = dw_data.getitemstring(i,"cmcjscrwgy_gxsh")
-	llfind = dw_data.find("f_select='1' and cmcjscrwgy_pswcbz <> '1' ",1,dw_data.rowcount())
-	if llfind > 0 then 
-		messagebox("提示信息","第 "+ string (llfind)+" 行审批未完成 ，不能转到包装工序")
-		gf_closehelp()
-		Return -1
-	end if
-end if
+//if lsnextgxbh1 = '10' then
+//	//vspswcbz = //lsGxsh = dw_data.getitemstring(i,"cmcjscrwgy_gxsh")
+//	llfind = dw_data.find("f_select='1' and cmcjscrwgy_pswcbz <> '1' ",1,dw_data.rowcount())
+//	if llfind > 0 then 
+//		messagebox("提示信息","第 "+ string (llfind)+" 行审批未完成 ，不能转到包装工序")
+//		gf_closehelp()
+//		Return -1
+//	end if
+//end if
 
 //begin 20210602 自动生成转序交接单，记录交接单号，  不使用工序选择窗口中手工录入的交接单号
 //更新转序前的工序名称、工序描述
@@ -328,8 +326,8 @@ SELECT  CMBZGYLX_GXMC,CMBZGYLX_GXMS INTO :vsgxmcnew,:vsgxmsnew FROM CMBZGYLX
 WHERE CMBZGYLX_GYLXBH = :lsNextGylxbh AND CMBZGYLX_GXBH = :lsnextgxbh1 AND CMBZGYLX_GXSH = :lsNextGxsh ;
 if isnull(vsgxmcnew) then vsgxmcnew = ''
 if isnull(vsgxmsnew) then vsgxmsnew = ''
-lssql = "INSERT INTO ZXJJD1(ZXJJD1_LSBH,ZXJJD1_SJDH,ZXJJD1_DJRQ,ZXJJD1_XGSJ,ZXJJD1_ZDR,ZXJJD1_GYLXBH,ZXJJD1_GXBH,ZXJJD1_GXMC,ZXJJD1_GXSH,ZXJJD1_GXMS) "	+&
-		 " VALUES ('"+vsjjdlsh+"','"+vsjjdbh+"','"+gscwrq+"','"+vsxgsj+"','"+gsusername+"','"+lsNextGylxbh+"','"+lsnextgxbh1+"','"+vsgxmcnew+"','"+lsNextGxsh+"','"+vsgxmsnew+"') "
+lssql = "INSERT INTO ZXJJD1(ZXJJD1_LSBH,ZXJJD1_SJDH,ZXJJD1_DJRQ,ZXJJD1_XGSJ,ZXJJD1_ZDR,ZXJJD1_GYLXBH,ZXJJD1_GXBH,ZXJJD1_GXMC,ZXJJD1_GXSH,ZXJJD1_GXMS,ZXJJD1_BZ) "	+&
+		 " VALUES ('"+vsjjdlsh+"','"+vsjjdbh+"','"+gscwrq+"','"+vsxgsj+"','"+gsusername+"','"+lsNextGylxbh+"','"+lsnextgxbh1+"','"+vsgxmcnew+"','"+lsNextGxsh+"','"+vsgxmsnew+"','"+lsZxbh+"'   ) "
 If gfexesql(lsSql,sqlca) < 0 Then
 	lsErr = sqlca.sqlerrtext
 	Rollback;
@@ -348,7 +346,7 @@ If gfexesql(lsSql,sqlca) < 0 Then
 	gf_closehelp()
 	Return -1
 End If
-lsZxbh = vsjjdbh
+//lsZxbh = vsjjdbh
 //end 20210602 
 
 
@@ -403,7 +401,7 @@ For i = 1 to lnDs.rowcount()
 	lsFlbh = lnDs.getitemstring(i,"f_flbh")
 	
 	// 把新生成的流水编号、任务编号更新回临时表中
-	lsSql = "update " + isDzyCpGxTempTable + " set F_NEXTSCRWLSBH='"+lsScrwlsbh+"',F_NEXTSCRWRWBH='"+lsScrwRwbh+"' "+&
+	lsSql = "update " + isDzyCpGxTempTable + " set F_NEXTSCRWLSBH='"+lsScrwlsbh+"',F_NEXTSCRWRWBH='"+lsScrwRwbh+"',F_GXSH ='"+lsNextGxsh+"',F_GXBH='"+lsYjjfGxbh+"' "+&
 		" where F_LSBH='"+lsLsbh+"' and F_FLBH='"+lsFlbh+"' "
 	
 	If gfexesql(lsSql,sqlca) < 0 Then
@@ -420,38 +418,86 @@ Next
 //destroy lnDs //20210324 生成条码号再销毁
 
 
-// 根据流水号和工序顺号即可唯一确定的取出数据
-// 下道工序的工序顺号和总工时理论上都是一样的，所以用循环最后的这个即可
-Select  CMCJSCRWGY_GXBH,CMCJSCRWGY_ZGS
-	Into :lsNextGxbh,:ldZgs
-	From CMCJSCRWGY
-	Where CMCJSCRWGY_LSBH = :lsLsbh
-	and CMCJSCRWGY_GXSH = :lsNextGxsh;
-//And CMCJSCRWGY_FLBH = :lsFlbh	
-If isnull(lsCpbh) or trim(lsCpbh) = "" Then
-	Rollback;
-	lsCpbh = ""
-	messagebox("提示信息","获取生产任务单产品编号失败!")
-	gf_closehelp()
-	Return -1
-End If
+// 此处可能因工序顺号的变动造成查询不到对应的生产任务工艺数据
+// 因此这里需要判断是否可以在CMCJSCRWGY中查到对应工序编号，如果没有就新增一条
 
-If isnull(lsNextgxbh) or trim(lsNextgxbh) = "" Then
-	Rollback;
-	lsNextgxbh = ""
-	messagebox("提示信息","获取生产任务工序编号失败!")
-	gf_closehelp()
-	Return -1
-End If
+// 工艺路线一样的情况下，查询不到分以下几种情况，
+// 1.在这条工艺路线下新增了一条工序，现在要转到这条新增的工序中，此时生产任务工艺并没有更新，因此查不到
+// 2.修改了要转到的工序的顺号，导致用当前的顺号查不到生产任务工艺中的数据
+// 20210624 by chengxsh
 
-If isnull(ldZgs) Then
-	ldZgs = 0
-End If
+For i = 1 to lnDs.rowcount()
+	lsLsbh = lnDs.getitemstring(i,"f_lsbh")
+	lsFlbh = lnDs.getitemstring(i,"f_flbh")
+
+	Select  CMCJSCRWGY_GXBH,CMCJSCRWGY_ZGS
+		Into :lsNextGxbh,:ldZgs
+		From CMCJSCRWGY
+		Where CMCJSCRWGY_LSBH = :lsLsbh
+		and CMCJSCRWGY_GXSH = :lsNextGxsh;
+	// And CMCJSCRWGY_FLBH = :lsFlbh	
+	If isnull(lsCpbh) or trim(lsCpbh) = "" Then
+		Rollback;
+		lsCpbh = ""
+		messagebox("提示信息","获取生产任务单产品编号失败!")
+		gf_closehelp()
+		Return -1
+	End If
+
+	If isnull(lsNextgxbh) or trim(lsNextgxbh) = "" Then
+
+		lsSql = "INSERT INTO CMCJSCRWGY (CMCJSCRWGY_LSBH,CMCJSCRWGY_FLBH,CMCJSCRWGY_CPBH,CMCJSCRWGY_GXSH,"+&
+			" CMCJSCRWGY_GXBH,CMCJSCRWGY_RWLS,CMCJSCRWGY_RWBH,CMCJSCRWGY_JHLS,CMCJSCRWGY_JHFL,"+&
+			" CMCJSCRWGY_JHBH,CMCJSCRWGY_KGRY,CMCJSCRWGY_KGRQ,CMCJSCRWGY_WGRY,CMCJSCRWGY_WGRQ,"+&
+			" CMCJSCRWGY_GXZT,CMCJSCRWGY_SFCJ,CMCJSCRWGY_SFZX,CMCJSCRWGY_GZZX,CMCJSCRWGY_ZGS,CMCJSCRWGY_SJGS,"+&
+			" CMCJSCRWGY_ZSL,CMCJSCRWGY_HGSL,CMCJSCRWGY_BFSL,CMCJSCRWGY_SFSDGX,CMCJSCRWGY_SFMDGX,"+&
+			" CMCJSCRWGY_ZJJG,CMCJSCRWGY_NEXTSCRWLSBH,CMCJSCRWGY_GYLXBH,CMCJSCRWGY_GYLXFLBH,"+&
+			" CMCJSCRWGY_SCPC,CMCJSCRWGY_ZXRY,CMCJSCRWGY_ZXRQ,CMCJSCRWGY_ZXBH,CMCJSCRWGY_PSWCBZ,"+&
+			" CMCJSCRWGY_PSWCRQ,CMCJSCRWGY_FSL1,CMCJSCRWGY_JJDLS,CMCJSCRWGY_JJDFL)"+&
+			" SELECT CMCJSCRWGY_LSBH,'"+lsNextGylxFlbh+"',CMCJSCRWGY_CPBH,'"+lsNextGxsh+"','"+lsYjjfGxbh+"',CMCJSCRWGY_RWLS,"+&
+			" CMCJSCRWGY_RWBH,CMCJSCRWGY_JHLS,CMCJSCRWGY_JHFL,CMCJSCRWGY_JHBH,'','','','','G0','0','1',CMCJSCRWGY_GZZX,CMCJSCRWGY_ZGS,CMCJSCRWGY_SJGS,CMCJSCRWGY_ZSL,"+&
+			" CMCJSCRWGY_HGSL,CMCJSCRWGY_BFSL,'0','0',CMCJSCRWGY_ZJJG,"+&
+			" '',CMCJSCRWGY_GYLXBH,'"+lsNextGylxFlbh+"',CMCJSCRWGY_SCPC,'"+gsusername+"',"+&
+			" '"+gscwrq+"','','0','',CMCJSCRWGY_FSL1,"+&
+			" CMCJSCRWGY_JJDLS,CMCJSCRWGY_JJDFL FROM CMCJSCRWGY WHERE CMCJSCRWGY_LSBH = '"+lsLsbh+"' "+&
+			" AND CMCJSCRWGY_FLBH ='"+lsFlbh+"' ";
+
+		If gfexesql(lsSql,sqlca) < 0 Then
+			lsErr = sqlca.sqlerrtext
+			Rollback;
+			messagebox("提示信息","新增生产任务工艺数据时出错！"+lsErr+"~r~n"+ lsSql)
+			gf_closehelp()
+			Return -1
+		End If
+
+		// Select  CMCJSCRWGY_GXBH,CMCJSCRWGY_ZGS
+		// 	Into :lsNextGxbh,:ldZgs
+		// 	From CMCJSCRWGY
+		// 	Where CMCJSCRWGY_LSBH = :lsLsbh
+		// 	and CMCJSCRWGY_GXSH = :lsNextGxsh;
+		// If isnull(lsNextgxbh) or trim(lsNextgxbh) = "" Then
+		// 	Rollback;
+		// 	lsNextgxbh = ""
+		// 	messagebox("提示信息","获取生产任务工序编号失败!")
+		// 	gf_closehelp()
+		// 	Return -1
+		// End If
+	End If
+Next
+
+// If isnull(ldZgs) Then
+// 	ldZgs = 0
+// End If
+// 总工时没用,之前这种取值方法也是错的,只能取到一条 (｀_ゝ´),这里直接置为0
+// 20210624	by chengxsh
+ldZgs = 0
+
+
 
 sqlca.autocommit = false
 // 此处工艺路线分录编号总是更新为01，不知道为啥
 // 是否领料更新为1，已领料
-lsSql = "insert into CMSCRW( CMSCRW_LSBH,CMSCRW_RWBH,CMSCRW_RWLY,CMSCRW_CPBH,"+&
+lsSql = 	"insert into CMSCRW( CMSCRW_LSBH,CMSCRW_RWBH,CMSCRW_RWLY,CMSCRW_CPBH,"+&
 	" CMSCRW_GXSH,CMSCRW_GXBH,CMSCRW_CSRQ,"+&
 	" CMSCRW_SFLL,CMSCRW_FPBZ,CMSCRW_FPRY,CMSCRW_FPRQ,CMSCRW_DEGS,CMSCRW_WLBH,CMSCRW_GYLXBH,CMSCRW_SCRWH,CMSCRW_GYLXFLBH, CMSCRW_FSL1 ) "+&
 	" select F_NEXTSCRWLSBH,F_NEXTSCRWRWBH,'GXZYD',F_CPBH,"+&
@@ -491,7 +537,7 @@ lsSql = "update CMCJSCRWGY "+&
 	" CMCJSCRWGY_NEXTSCRWLSBH = F_NEXTSCRWLSBH,"+&
 	" CMCJSCRWGY_ZXRY='"+GsUserName+"',"+&
 	" CMCJSCRWGY_ZXRQ='"+gsCwrq+"', "+&
-	" CMCJSCRWGY_ZXBH='"+lsZxbh+"' ,CMCJSCRWGY_JJDLS = F_JJDLS,CMCJSCRWGY_JJDFL=F_JJDFL "+&
+	" CMCJSCRWGY_ZXBH='"+vsjjdbh+"' ,CMCJSCRWGY_JJDLS = F_JJDLS,CMCJSCRWGY_JJDFL=F_JJDFL,CMCJSCRWGY_BZ='"+lsZxbh+"'  "+&
 	" from "+isDzyCpGxTempTable +&
 	" where CMCJSCRWGY_LSBH=F_LSBH and CMCJSCRWGY_FLBH=F_FLBH "
 
